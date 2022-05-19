@@ -1,11 +1,10 @@
 {
   "name": "frapi",
-  "version": "0.1.1",
+  "version": "0.1.6",
   "description": "Automatically create client-side functions to consume your API",
-  "source": "lib.ts",
+  "source": "lib.js",
   "main": "dist/main.js",
   "module": "dist/module.js",
-  "types": "dist/types.d.ts",
   "keywords": [
     "frontend",
     "API",
@@ -19,10 +18,8 @@
   "license": "MIT",
   "scripts": {
     "watch": "parcel watch",
-    "build": "parcel build"
-  },
-  "dependencies": {
-    "randexp": "^0.5.3"
+    "build": "parcel build",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@parcel/packager-ts": "^2.5.0",

@@ -175,4 +175,16 @@ describe("validation", () => {
       'Field items["item-3"]. Expected to be a string but got: 3'
     );
   });
+
+  it("Shows custom validation error message", () => {
+    const Type = {
+      sampleField: {
+        $type: Number,
+        $validate: () => {
+          throw new Error("Test error");
+        }
+      }
+    };
+    expect(() => validate(Type, { sampleField: 120 })).toThrowError("Test error");
+  });
 });

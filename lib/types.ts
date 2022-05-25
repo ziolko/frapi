@@ -1,5 +1,3 @@
-import { type } from "os";
-
 export function MapOf<T>(type: T): { $type: Record<string, PropertyType<T>>; $structure: "map" } {
   return { $structure: "map", $innerType: type } as any;
 }
@@ -146,7 +144,7 @@ export function validate<T>(type: T, object: any, options = { strict: true }): P
     }
 
     // @ts-ignore
-    validate(type[key], object[propertyName], getNestedOptions(key));
+    validate(type[key], object[propertyName], getNestedOptions(propertyName));
   }
 
   if (options?.strict) {

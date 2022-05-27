@@ -1,6 +1,7 @@
 import { Express } from "express";
 import { ExportedEndpoint } from "./const";
 import getFrapiEndpoints from "./endpoints";
+import generateTypes from "./generate-types";
 
 const fs = require("fs/promises");
 
@@ -24,7 +25,7 @@ export default async function saveToFile(app: Express, path: string, generator =
 
 const generators = {
   js: jsGenerator,
-  ts: tsGenerator,
+  ts: tsGenerator
 };
 
 function jsGenerator(endpoints: ExportedEndpoint[]) {
@@ -46,11 +47,13 @@ function tsGenerator(endpoints: ExportedEndpoint[]) {
   let data = "";
 
   for (const endpoint of endpoints) {
-    const args = [
-      ...endpoint.params.map((param) => `${param}: string`),
-      endpoint.query ? "query: Record<string, string>" : "",
-      endpoint.body ? "body: any" : "",
-    ].filter(Boolean);
+    const query = endpoint.query
+      ? `query: ${endpoint.query === true ? "Record<string, string>" : generateTypes(endpoint.query)}`
+      : "";
+
+    const body = endpoint.body ? `body: ${endpoint.body === true ? "any" : generateTypes(endpoint.body)}` : "";
+
+    const args = [...endpoint.params.map(param => `${param}: string`), query, body].filter(Boolean);
 
     data += `export async function ${endpoint.name}(${args.join(", ")}) {
   return fetch(\`${endpoint.path}\`, { method: '${

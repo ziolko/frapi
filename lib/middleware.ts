@@ -1,6 +1,6 @@
 import { middlewareName, Options } from "./const";
 import express from "express";
-import { PropertyType } from "./types";
+import { ToType } from "./types";
 import * as core from "express-serve-static-core";
 
 export default function frapiMiddleware<Body = undefined, Query = undefined>(
@@ -14,11 +14,7 @@ export default function frapiMiddleware<Body = undefined, Query = undefined>(
     ResBody = any,
     ReqQuery = any,
     Locals extends Record<string, any> = Record<string, any>
-  >(
-    req: express.Request<any, ResBody, PropertyType<Body>, PropertyType<Query>, Locals>,
-    res: Express.Response,
-    next: any
-  ) {
+  >(req: express.Request<any, ResBody, ToType<Body>, ToType<Query>, Locals>, res: Express.Response, next: any) {
     // @ts-ignore
     if (req === middlewareName) {
       next({ name: name, body: bodyType, query: queryType });

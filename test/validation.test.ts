@@ -37,6 +37,10 @@ describe("validation", () => {
     validate("test", "test");
   });
 
+  it("Successfully validates an exact number", () => {
+    validate(41, 41);
+  });
+
   it("Fails when expects an exact string but gets another string", () => {
     expect(() => validate("test", "another-string")).toThrowError(ValidationError);
   });
@@ -170,7 +174,7 @@ describe("validation", () => {
     );
   });
 
-  it("Shows a friendly path message for fields with hyphen in field key", () => {
+  it("Shows a friendly path message for fields with hyphen in the field key", () => {
     expect(() => validate({ items: MapOf(String) }, { items: { one: "one", two: "two", "item-3": 3 } })).toThrowError(
       'Field items["item-3"]. Expected to be a string but got: 3'
     );

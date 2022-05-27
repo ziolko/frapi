@@ -1,33 +1,35 @@
-export function MapOf<T>(type: T): { $type: Record<string, PropertyType<T>>; $structure: "map" } {
+import { simplePropertyKeyRegex } from "./const";
+
+export function MapOf<T>(type: T): { $type: Record<string, ToType<T>>; $structure: "map" } {
   return { $structure: "map", $innerType: type } as any;
 }
 
-export function ArrayOf<T>(type: T): { $type: PropertyType<T>[]; $structure: "array" } {
+export function ArrayOf<T>(type: T): { $type: ToType<T>[]; $structure: "array" } {
   return { $structure: "array", $innerType: type } as any;
 }
 
 export function UnionOf<A, B>(a: A, b: B): { $type: A | B; $structure: "union" };
 export function UnionOf<A, B, C>(a: A, b: B, c: C): { $type: A | B | C; $structure: "union" };
 export function UnionOf<A, B, C, D>(a: A, b: B, c: C, d: D): { $type: A | B | C | D; $structure: "union" };
-export function UnionOf<T>(...args: T[]): { $type: PropertyType<T>; $structure: "union" } {
+export function UnionOf<T>(...args: T[]): { $type: ToType<T>; $structure: "union" } {
   return { $structure: "union", $innerType: args } as any;
 }
 
 export type ObjectType<T extends {}> = {
   [P in keyof T as P extends `\$${infer P0}` ? never : P extends `${infer P1}?` ? P1 : P]: P extends `${infer P1}?`
-    ? PropertyType<T[P]> | undefined
-    : PropertyType<T[P]>;
+    ? ToType<T[P]> | undefined
+    : ToType<T[P]>;
 };
 
 // prettier-ignore
-export type PropertyType<V>
+export type ToType<V>
     = V extends StringConstructor ? string
     : V extends NumberConstructor ? number
     : V extends BooleanConstructor ? boolean
     : V extends null ? null
     : V extends (...args: unknown[]) => unknown ? never
-    : V extends (infer E)[] ? PropertyType<E>[]
-    : V extends { $type: infer K, $structure?: "map" | "array" | "union", $innerType?: any } ? PropertyType<K>
+    : V extends (infer E)[] ? ToType<E>[]
+    : V extends { $type: infer K, $structure?: "map" | "array" | "union", $innerType?: any } ? ToType<K>
     : V extends {} ? ObjectType<V> : never;
 
 export class ValidationError extends Error {
@@ -36,10 +38,12 @@ export class ValidationError extends Error {
     for (const pathItem of path) {
       if (typeof pathItem === "number") {
         pathString += `[${pathItem}]`;
-      } else if (/^[a-zA-Z_$][_a-zA-Z0-9]*$/.test(pathItem)) {
-        pathString += `${pathString.length > 0 ? "." : ""}${pathItem}`;
       } else {
-        pathString += `["${pathItem.replace(/"/g, '\\"')}"]`;
+        if (simplePropertyKeyRegex.test(pathItem)) {
+          pathString += `${pathString.length > 0 ? "." : ""}${pathItem}`;
+        } else {
+          pathString += `["${pathItem.replace(/"/g, '\\"')}"]`;
+        }
       }
     }
 
@@ -48,9 +52,9 @@ export class ValidationError extends Error {
 }
 
 const pathSymbol = Symbol("validation-path");
-const quote = (str: string) => JSON.stringify(str);
+const quote = (str: any) => JSON.stringify(str);
 
-export function validate<T>(type: T, object: any, options = { strict: true }): PropertyType<T> {
+export function validate<T>(type: T, object: any, options = { strict: true }): ToType<T> {
   // @ts-ignore
   const currentPath = options?.[pathSymbol] ?? [];
   const getNestedOptions = (node: string | number) => ({ ...(options ?? {}), [pathSymbol]: [...currentPath, node] });
@@ -73,6 +77,11 @@ export function validate<T>(type: T, object: any, options = { strict: true }): P
   if (typeof type === "string") {
     if (object === type) return object as any;
     else throw new ValidationError(`Expected string ${quote(type)} but got: "${quote(object)}"`, currentPath);
+  }
+
+  if (typeof type === "number") {
+    if (object === type) return object as any;
+    else throw new ValidationError(`Expected number ${quote(type)} but got: "${quote(object)}"`, currentPath);
   }
 
   if (typeof type !== "object") {

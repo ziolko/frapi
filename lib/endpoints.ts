@@ -159,6 +159,7 @@ function getExportedEndpoint({ path, method, options }: Endpoint): ExportedEndpo
     params: [] as string[],
     body: body,
     query: options.query,
+    response: options.response,
     options
   };
 

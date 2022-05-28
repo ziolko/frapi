@@ -21,5 +21,6 @@ export type ExportedEndpoint = {
   params: string[];
   body: boolean | object;
   query: boolean | object;
+  response: boolean | object;
   options: Options<unknown, unknown>;
 };

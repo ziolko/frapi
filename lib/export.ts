@@ -56,15 +56,15 @@ function tsGenerator(endpoints: ExportedEndpoint[]) {
       : "";
 
     const body = endpoint.body ? `body: ${endpoint.body === true ? "any" : generateTypes(endpoint.body)}` : "";
-    const result = !endpoint.response || endpoint.response === true ? "any" : generateTypes(endpoint.response);
+    const result = !endpoint.response ? null : endpoint.response === true ? "any" : generateTypes(endpoint.response);
     const args = [...endpoint.params.map(param => `${param}: string`), query, body].filter(Boolean);
 
     data += `export async function ${endpoint.name}(${args.join(", ")}) {
     const response = await fetch(\`${endpoint.path}\`, { method: '${
       endpoint.method
     }',  headers: { 'Content-Type': 'application/json' }, ${endpoint.body ? "body: JSON.stringify(body), " : ""}});
-    const responseBody = (await response.json()) as ${result};
-    return { ...response, body: responseBody };
+    const responseBody = ${!!result ? `(await response.json()) as ${result}` : "null"};
+    return { ok: response.ok, status: response.status, body: responseBody, headers: response.headers, response };
 }\n\n`;
   }
   return data;

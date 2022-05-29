@@ -1,4 +1,4 @@
-import { middlewareName } from "./const";
+import { addSendResponseSymbol, middlewareName } from "./const";
 import express from "express";
 import { ToType, validate } from "./types";
 import * as core from "express-serve-static-core";
@@ -39,6 +39,24 @@ export default function frapiMiddleware<Body = undefined, Query = undefined, Res
           res.send("Error while validating request query. " + error.message);
           return;
         }
+      }
+
+      // @ts-ignore
+      if (typeof options === "object" && options[addSendResponseSymbol]) {
+        // @ts-ignore
+        res.sendResponse = (payload: any) => {
+          if (options.response && typeof options.response !== "boolean") {
+            try {
+              validate(options.response, payload);
+            } catch (error) {
+              res.status(500);
+              res.send("Error while validating response payload. " + error.message);
+              return res;
+            }
+          }
+
+          return res.json(payload);
+        };
       }
 
       return next();

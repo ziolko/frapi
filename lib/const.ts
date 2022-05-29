@@ -1,6 +1,7 @@
 export const middlewareName = "frapiMiddleware";
 export const methodsWithPayload = ["post", "put", "patch"];
 export const simplePropertyKeyRegex = /^[a-zA-Z_$][_a-zA-Z0-9]*$/;
+export const addSendResponseSymbol = Symbol("add-send-response");
 
 export type Options<Body, Query> = {
   name: string;

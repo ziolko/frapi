@@ -1,6 +1,7 @@
 import express, { Router } from "express";
-import frapi, { getFrapiEndpoints } from "../lib";
+import frapi from "../lib";
 import { ArrayOf, validate } from "../lib/types";
+import getFrapiEndpoints from "../lib/endpoints";
 
 describe("Exporting", () => {
   it("Exposes a single GET endpoint at the root app instance", () => {

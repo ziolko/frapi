@@ -49,9 +49,8 @@ export default function frapiMiddleware<Body = undefined, Query = undefined, Res
             try {
               validate(options.response, payload);
             } catch (error) {
-              res.status(500);
-              res.send("Error while validating response payload. " + error.message);
-              return res;
+              error.message = "Error while validating response payload. " + error.message;
+              throw error;
             }
           }
 

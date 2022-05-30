@@ -8,9 +8,11 @@ import {
   RouteParameters
 } from "express-serve-static-core";
 
-import { ToType } from "./types";
 import { ParsedQs } from "qs";
-import express, { RouterOptions } from "express";
+import { RouterOptions } from "express";
+import createRouter from "express-promise-router";
+
+import { ToType } from "./types";
 import { middleware } from "../lib";
 import { addSendResponseSymbol } from "./const";
 
@@ -90,7 +92,7 @@ export interface ApiMethod<R> {
  * @return {{ FrapiRouter }}
  */
 export default function Router(options?: RouterOptions): FrapiRouter {
-  const router = express.Router(options);
+  const router = createRouter(options);
 
   const methods = [
     "all",

@@ -1,4 +1,4 @@
-import { ArrayOf, MapOf, UnionOf, validate, ValidationError } from "../lib/types";
+import { ArrayOf, MapOf, AnyOf, validate, ValidationError, AllOf } from "../lib/types";
 
 describe("validation", () => {
   it("Successfully validates a string", () => {
@@ -81,6 +81,15 @@ describe("validation", () => {
     expect(() => validate({ user: { name: String } }, { user: { name: 100 } })).toThrowError(ValidationError);
   });
 
+  it("Skips validation of fields starting with $ in the type definition ", () => {
+    validate({ id: Number, $test: "Test" }, { id: 100 });
+  });
+
+  it("Doesn't allow fields starting with $ in object", () => {
+    expect(() => validate({ id: Number, $test: "Test" }, { id: 100, $test: 12 })).toThrowError(ValidationError);
+    expect(() => validate({ id: Number }, { id: 100, $test: 12 })).toThrowError(ValidationError);
+  });
+
   it("Succeeds when validating an array of string", () => {
     validate(ArrayOf(String), ["Test1", "Test2", "Test3"]);
   });
@@ -98,12 +107,28 @@ describe("validation", () => {
   });
 
   it("Succeeds when validating an union type", () => {
-    validate(UnionOf(String, Number), "test");
-    validate(UnionOf(String, Number), 100);
+    validate(AnyOf(String, Number), "test");
+    validate(AnyOf(String, Number), 100);
   });
 
   it("Fails when validating an union type and gets another type", () => {
-    expect(() => validate(UnionOf(String, Number), true)).toThrowError(ValidationError);
+    expect(() => validate(AnyOf(String, Number), true)).toThrowError(ValidationError);
+  });
+
+  it("Succeeds when validating an intersection type", () => {
+    validate(AllOf({ age: Number }, { surname: String }), { age: 18, surname: "Test" });
+  });
+
+  it("Fails when validating an intersection type and is missing a property", () => {
+    expect(() => {
+      validate(AllOf({ age: Number }, { name: String, surname: String }), { age: 18, surname: "Test" });
+    }).toThrowError(ValidationError);
+  });
+
+  it("Fails when validating an intersection type and has additional propert", () => {
+    expect(() => {
+      validate(AllOf({ age: Number }, { surname: String }), { age: 18, name: "AA", surname: "Test" });
+    }).toThrowError(ValidationError);
   });
 
   it("Succeeds when validating a map type", () => {
@@ -125,7 +150,7 @@ describe("validation", () => {
   });
 
   it("Succeeds when validating a map type of object or boolean", () => {
-    validate(MapOf(UnionOf({ name: String }, Boolean)), { a: { name: "test" }, b: { name: "test2" }, c: false });
+    validate(MapOf(AnyOf({ name: String }, Boolean)), { a: { name: "test" }, b: { name: "test2" }, c: false });
   });
 
   it("Succeeds validating optional field", () => {

@@ -1,4 +1,4 @@
-import { ArrayOf, MapOf, UnionOf } from "../lib/types";
+import { ArrayOf, MapOf, AnyOf, AllOf } from "../lib/types";
 import generateTypes from "../lib/generate-types";
 
 describe("Typescript generation", () => {
@@ -12,8 +12,13 @@ describe("Typescript generation", () => {
   it("Generates map of number type", () => expect(generateTypes(MapOf(Number))).toEqual("Record<string, number>"));
 
   it("Generates union type", () => {
-    const type = UnionOf(Number, String, Boolean);
+    const type = AnyOf(Number, String, Boolean);
     expect(generateTypes(type)).toEqual("number | string | boolean");
+  });
+
+  it("Generates intersection type", () => {
+    const type = AllOf({ name: String }, { age: Number });
+    expect(generateTypes(type)).toEqual("{ name: string } & { age: number }");
   });
 
   it("Generates custom type", () => {
@@ -36,7 +41,7 @@ describe("Typescript generation", () => {
       "name?": String,
       friends: ArrayOf({ id: Number }),
       address: {
-        country: UnionOf("Poland", "US"),
+        country: AnyOf("Poland", "US"),
         zipCode: String
       }
     };

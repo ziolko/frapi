@@ -8,11 +8,18 @@ export function ArrayOf<T>(type: T): { $type: ToType<T>[]; $structure: "array" }
   return { $structure: "array", $innerType: type } as any;
 }
 
-export function UnionOf<A, B>(a: A, b: B): { $type: A | B; $structure: "union" };
-export function UnionOf<A, B, C>(a: A, b: B, c: C): { $type: A | B | C; $structure: "union" };
-export function UnionOf<A, B, C, D>(a: A, b: B, c: C, d: D): { $type: A | B | C | D; $structure: "union" };
-export function UnionOf<T>(...args: T[]): { $type: ToType<T>; $structure: "union" } {
+export function AnyOf<A, B>(a: A, b: B): { $type: A | B; $structure: "union" };
+export function AnyOf<A, B, C>(a: A, b: B, c: C): { $type: A | B | C; $structure: "union" };
+export function AnyOf<A, B, C, D>(a: A, b: B, c: C, d: D): { $type: A | B | C | D; $structure: "union" };
+export function AnyOf<T>(...args: T[]): { $type: ToType<T>; $structure: "union" } {
   return { $structure: "union", $innerType: args } as any;
+}
+
+export function AllOf<A extends {}, B extends {}>(a: A, b: B): { $type: ToType<A> & ToType<B>; $structure: "intersection" };
+export function AllOf<A extends {}, B extends {}, C extends {}>(a: A, b: B, c: C): { $type: ToType<A> & ToType<B> & ToType<C>; $structure: "intersection" };
+export function AllOf<A extends {}, B extends {}, C extends {}, D extends {}>(a: A, b: B, c: C, d: D): { $type: ToType<A> & ToType<B> & ToType<C> & ToType<D>; $structure: "intersection" };
+export function AllOf<T>(...args: T[]): { $type: ToType<T>; $structure: "intersection" } {
+  return { $structure: "intersection", $innerType: args } as any;
 }
 
 export type ObjectType<T extends {}> = {
@@ -29,7 +36,7 @@ export type ToType<V>
     : V extends null ? null
     : V extends (...args: unknown[]) => unknown ? never
     : V extends (infer E)[] ? ToType<E>[]
-    : V extends { $type: infer K, $structure?: "map" | "array" | "union", $innerType?: any } ? ToType<K>
+    : V extends { $type: infer K, $structure?: "map" | "array" | "union" | "intersection", $innerType?: any } ? ToType<K>
     : V extends {} ? ObjectType<V> : never;
 
 export class ValidationError extends Error {
@@ -47,7 +54,7 @@ export class ValidationError extends Error {
       }
     }
 
-    super(pathString.length > 0 ? `Field ${pathString}. ${message}` : message);
+    super(pathString.length > 0 ? `Field "${pathString}". ${message}` : message);
   }
 }
 
@@ -122,6 +129,27 @@ export function validate<T>(type: T, object: any, options = { strict: true }): T
     throw new ValidationError(`Expected to be an one of union types but got: ${quote(object)}`, currentPath);
   }
 
+  if (objType.$structure === "intersection") {
+    if (!Array.isArray(objType.$innerType)) {
+      throw new ValidationError(`Expected $innerType to be an array: ${objType.$innerType}`, currentPath);
+    }
+
+    for (const optionType of objType.$innerType) {
+      if(typeof optionType !== "object") {
+          throw new ValidationError(`Expected $innerType item to be an object: ${optionType}`, currentPath);
+      }
+
+      validate(optionType, object, { ...options, [pathSymbol]: currentPath, strict: false } as any);
+    }
+
+    if(options.strict) {
+      const mergedType = objType.$innerType.reduce((acc: object, x: object) => ({...x, ...acc}), {});
+      checkExcessiveObjectFields(object, mergedType, currentPath);
+    }
+
+    return object;
+  }
+
   if (objType.$type) {
     validate(objType.$type, object, options);
 
@@ -145,6 +173,10 @@ export function validate<T>(type: T, object: any, options = { strict: true }): T
   }
 
   for (const key of Object.keys(type)) {
+    if (key.startsWith("$")) {
+      continue;
+    }
+
     const isOptional = key.endsWith("?");
     const propertyName = isOptional ? key.slice(0, -1) : key;
 
@@ -157,12 +189,20 @@ export function validate<T>(type: T, object: any, options = { strict: true }): T
   }
 
   if (options?.strict) {
-    for (const key of Object.keys(object)) {
-      if (!objType[key] && !objType[`${key}?`]) {
-        throw new ValidationError(`Unexpected object property: ${quote(key)}`, currentPath);
-      }
-    }
+    checkExcessiveObjectFields(object, objType, currentPath);
   }
 
   return object;
+}
+
+function checkExcessiveObjectFields(object: any, objType: any, currentPath: string[]) {
+  for (const key of Object.keys(object)) {
+    if(key.startsWith("$")) {
+      throw new ValidationError(`Fields starting with $ are forbidden: ${quote(key)}`, currentPath);
+    }
+
+    if (!objType[key] && !objType[`${key}?`]) {
+      throw new ValidationError(`Unexpected object property: ${quote(key)}`, currentPath);
+    }
+  }
 }

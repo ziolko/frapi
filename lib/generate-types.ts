@@ -33,6 +33,10 @@ export default function generateTypes(type: any): string {
     return objType.$innerType.map((innerType: any) => generateTypes(innerType)).join(" | ");
   }
 
+  if (objType.$structure === "intersection") {
+    return objType.$innerType.map((innerType: any) => generateTypes(innerType)).join(" & ");
+  }
+
   if (objType.$type) {
     return generateTypes(objType.$type);
   }

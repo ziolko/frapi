@@ -4,6 +4,7 @@ import {
   NextFunction,
   ParamsDictionary,
   Request,
+  RequestHandler,
   Response,
   RouteParameters
 } from "express-serve-static-core";
@@ -16,7 +17,7 @@ import { ToType } from "./types";
 import { middleware } from "../lib";
 import { addSendResponseSymbol } from "./const";
 
-export interface FrapiRouter {
+export interface FrapiRouter extends RequestHandler {
   all: ApiMethod<this>;
   get: ApiMethod<this>;
   post: ApiMethod<this>;
@@ -52,23 +53,25 @@ export interface FrapiRouter {
 export interface FrapiResponse<
   R = any,
   ResBody = any,
+  ResBodyValidated = any,
   Locals extends Record<string, any> = Record<string, any>,
   StatusCode extends number = number
-> extends Response<never, Locals, StatusCode> {
-  sendResponse: (payload: ResBody) => R;
+> extends Response<ResBody, Locals, StatusCode> {
+  sendResponse: (payload: ResBodyValidated) => R;
 }
 
 export interface FrapiRequestHandler<
   R = any,
   P = ParamsDictionary,
   ResBody = any,
+  ResBodyValidated = any,
   ReqBody = any,
   ReqQuery = ParsedQs,
   Locals extends Record<string, any> = Record<string, any>
 > {
   (
     req: Request<P, ResBody, ReqBody, ReqQuery, Locals>,
-    res: FrapiResponse<R, ResBody, Locals>,
+    res: FrapiResponse<R, ResBody, ResBodyValidated, Locals>,
     next: NextFunction
   ): void;
 }
@@ -76,22 +79,41 @@ export interface FrapiRequestHandler<
 export interface ApiMethod<R> {
   <
     Path extends string,
-    ReqBody = never,
-    ReqQuery = never,
+    ReqBody = any,
+    ReqQuery = any,
     ResBody = any,
     Locals extends Record<string, any> = Record<string, any>,
     P = RouteParameters<Path>
   >(
-    options: Path | { path: Path; name?: string; body?: ReqBody; query?: ReqQuery; response?: ResBody },
-    ...handlers: Array<FrapiRequestHandler<R, P, ToType<ResBody>, ToType<ReqBody>, ToType<ReqQuery>, Locals>>
+    options: Path,
+    ...handlers: Array<FrapiRequestHandler<R, P, ResBody, ResBody, ToType<ReqBody>, ToType<ReqQuery>, Locals>>
   ): R;
+
+  <
+    Path extends string,
+    ReqBody = never,
+    ReqQuery = never,
+    ResBodyValidated = any,
+    Locals extends Record<string, any> = Record<string, any>,
+    P = RouteParameters<Path>
+  >(
+    options: { path: Path; name?: string; body?: ReqBody; query?: ReqQuery; response?: ResBodyValidated },
+    ...handlers: Array<
+      FrapiRequestHandler<R, P, never, ToType<ResBodyValidated>, ToType<ReqBody>, ToType<ReqQuery>, Locals>
+    >
+  ): R;
+}
+
+export interface FrapiRouterConstructor {
+  new (options?: RouterOptions): FrapiRouter;
+  (options?: RouterOptions): FrapiRouter;
 }
 
 /**
  * @param options: {{ RouterOptions }}
  * @return {{ FrapiRouter }}
  */
-export default function Router(options?: RouterOptions): FrapiRouter {
+function Router(options?: RouterOptions): FrapiRouter {
   const router = createRouter(options);
 
   const methods = [
@@ -129,7 +151,12 @@ export default function Router(options?: RouterOptions): FrapiRouter {
 
     (router as any)[name] = (options: any, ...handlers: any[]) => {
       if (typeof options !== "object") {
-        return originalMethod.call(router, options, ...handlers);
+        const addSendResponse = (req: Request, res: Response, next: NextFunction) => {
+          (res as any).sendResponse = res.json;
+          next();
+        };
+
+        return originalMethod.call(router, options, addSendResponse, ...handlers);
       }
 
       return originalMethod.call(
@@ -143,3 +170,5 @@ export default function Router(options?: RouterOptions): FrapiRouter {
 
   return router as FrapiRouter;
 }
+
+export default Router as FrapiRouterConstructor;

@@ -1,5 +1,6 @@
 import express from "express";
-import frapi, { getFrapiEndpoints } from "../lib";
+import frapi from "../lib";
+import getFrapiEndpoints from "../lib/endpoints";
 
 function getEndpoint(path: string) {
   const app = express();

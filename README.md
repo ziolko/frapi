@@ -1,11 +1,6 @@
----
-slug: /
-sidebar_position: 1
----
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Introduction
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Frapi is middleware and router for Express providing the following features:
 

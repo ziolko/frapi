@@ -137,9 +137,14 @@ Example:
 ```typescript
 import { ArrayOf, AnyOf } from 'frapi';
 
+const Book = {
+    title: String,
+    author: String,
+};
+
 const User = {
-    name: 'String',
-    friends: ArrayOf(User),                       
+    name: String,
+    books: ArrayOf(Book),                       
     country: AnyOf('US' as const, 'UK' as const) 
 }
 ```

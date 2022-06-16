@@ -85,9 +85,7 @@ export interface ApiMethod<R> {
     Locals extends Record<string, any> = Record<string, any>,
     P = RouteParameters<Path>
   >(
-    options: Path,
-    ...handlers: Array<FrapiRequestHandler<R, P, ResBody, ResBody, ToType<ReqBody>, ToType<ReqQuery>, Locals>>
-  ): R;
+    options: Path, ...handlers: Array<FrapiRequestHandler<R, P, ResBody, ResBody, ReqBody, ReqQuery, Locals>>): R;
 
   <
     Path extends string,

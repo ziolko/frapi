@@ -1,6 +1,6 @@
 {
   "name": "frapi",
-  "version": "0.1.22",
+  "version": "0.1.23",
   "description": "Automatically create client-side functions to consume your API",
   "source": "lib.ts",
   "main": "dist/main.js",

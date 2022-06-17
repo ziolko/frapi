@@ -18,34 +18,34 @@ import { middleware } from "../lib";
 import { addSendResponseSymbol } from "./const";
 
 export interface FrapiRouter extends RequestHandler {
-  all: ApiMethod;
-  get: ApiMethod;
-  post: ApiMethod;
-  put: ApiMethod;
-  delete: ApiMethod;
-  patch: ApiMethod;
-  options: ApiMethod;
-  head: ApiMethod;
+  all: ApiMethod<this>;
+  get: ApiMethod<this>;
+  post: ApiMethod<this>;
+  put: ApiMethod<this>;
+  delete: ApiMethod<this>;
+  patch: ApiMethod<this>;
+  options: ApiMethod<this>;
+  head: ApiMethod<this>;
 
-  checkout: ApiMethod;
-  connect: ApiMethod;
-  copy: ApiMethod;
-  lock: ApiMethod;
-  merge: ApiMethod;
-  mkactivity: ApiMethod;
-  mkcol: ApiMethod;
-  move: ApiMethod;
-  "m-search": ApiMethod;
-  notify: ApiMethod;
-  propfind: ApiMethod;
-  proppatch: ApiMethod;
-  purge: ApiMethod;
-  report: ApiMethod;
-  search: ApiMethod;
-  subscribe: ApiMethod;
-  trace: ApiMethod;
-  unlock: ApiMethod;
-  unsubscribe: ApiMethod;
+  checkout: ApiMethod<this>;
+  connect: ApiMethod<this>;
+  copy: ApiMethod<this>;
+  lock: ApiMethod<this>;
+  merge: ApiMethod<this>;
+  mkactivity: ApiMethod<this>;
+  mkcol: ApiMethod<this>;
+  move: ApiMethod<this>;
+  "m-search": ApiMethod<this>;
+  notify: ApiMethod<this>;
+  propfind: ApiMethod<this>;
+  proppatch: ApiMethod<this>;
+  purge: ApiMethod<this>;
+  report: ApiMethod<this>;
+  search: ApiMethod<this>;
+  subscribe: ApiMethod<this>;
+  trace: ApiMethod<this>;
+  unlock: ApiMethod<this>;
+  unsubscribe: ApiMethod<this>;
 
   use: IRouterHandler<this> & IRouterMatcher<this>;
 }
@@ -82,7 +82,7 @@ export interface FrapiRequestHandler<
   ): void;
 }
 
-export interface ApiMethod {
+export interface ApiMethod<R> {
   <
     Path extends string,
     ReqBody = any,
@@ -91,7 +91,7 @@ export interface ApiMethod {
     Locals extends Record<string, any> = Record<string, any>,
     P = RouteParameters<Path>
   >(
-    options: Path, ...handlers: Array<FrapiRequestHandler<P, ResBody, ReqBody, ReqQuery, Locals>>): this;
+    options: Path, ...handlers: Array<FrapiRequestHandler<P, ResBody, ReqBody, ReqQuery, Locals>>): R;
 
   <
     Path extends string,
@@ -105,7 +105,7 @@ export interface ApiMethod {
     ...handlers: Array<
       FrapiRequestHandler<P, ResBody extends { $$__any: boolean } ? any : ToType<ResBody>, ToType<ReqBody>, ToType<ReqQuery>, Locals>
     >
-  ): this;
+  ): R;
 }
 
 export interface FrapiRouterConstructor {
@@ -172,7 +172,7 @@ function Router(options?: RouterOptions): FrapiRouter {
     };
   }
 
-  return router as any as FrapiRouter;
+  return router as FrapiRouter;
 }
 
 export default Router as FrapiRouterConstructor;

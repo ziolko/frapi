@@ -51,18 +51,22 @@ export interface FrapiRouter extends RequestHandler {
   use: IRouterHandler<this> & IRouterMatcher<this>;
 }
 
-export interface FrapiResponse<
-  R = any,
-  ResBody = any,
-  Locals extends Record<string, any> = Record<string, any>,
-  StatusCode extends number = number
-> extends Response<ResBody, Locals, StatusCode> {
+interface FrapiResponseVerified<R = any, ResBody = any, Locals extends Record<string, any> = Record<string, any>, StatusCode extends number = number> extends Response<ResBody, Locals, StatusCode> {
   /**
    * @deprecated Use sendResponse instead.
    */
   json: Send<ResBody, this>;
   sendResponse: (payload: ResBody) => R;
 }
+
+interface FrapiResponseNonVerified<R = any, Locals extends Record<string, any> = Record<string, any>, StatusCode extends number = number> extends Response<ResBody, Locals, StatusCode> {
+  sendResponse: (payload: any) => R;
+}
+
+type FrapiResponse<R = any, ResBody = any, Locals extends Record<string, any> = Record<string, any>, StatusCode extends number = number> =
+    ResBody extends { $$__any: boolean }
+        ? FrapiResponseNonVerified<R, Locals, StatusCode>
+        : FrapiResponseVerified<R, ResBody,  Locals, StatusCode>;
 
 export interface FrapiRequestHandler<
   R = any,
@@ -100,7 +104,7 @@ export interface ApiMethod<R> {
   >(
     options: { path: Path; name?: string; body?: ReqBody; query?: ReqQuery; response?: ResBody },
     ...handlers: Array<
-      FrapiRequestHandler<R, P, ToType<ResBody>, ToType<ReqBody>, ToType<ReqQuery>, Locals>
+      FrapiRequestHandler<R, P, ResBody extends { $$__any: boolean } ? any : ToType<ResBody>, ToType<ReqBody>, ToType<ReqQuery>, Locals>
     >
   ): R;
 }

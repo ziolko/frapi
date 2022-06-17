@@ -6,7 +6,8 @@ import {
   Request,
   RequestHandler,
   Response,
-  RouteParameters
+  RouteParameters,
+  Send,
 } from "express-serve-static-core";
 
 import { ParsedQs } from "qs";
@@ -53,25 +54,27 @@ export interface FrapiRouter extends RequestHandler {
 export interface FrapiResponse<
   R = any,
   ResBody = any,
-  ResBodyValidated = any,
   Locals extends Record<string, any> = Record<string, any>,
   StatusCode extends number = number
 > extends Response<ResBody, Locals, StatusCode> {
-  sendResponse: (payload: ResBodyValidated) => R;
+  /**
+   * @deprecated Use sendResponse instead.
+   */
+  json: Send<ResBody, this>;
+  sendResponse: (payload: ResBody) => R;
 }
 
 export interface FrapiRequestHandler<
   R = any,
   P = ParamsDictionary,
   ResBody = any,
-  ResBodyValidated = any,
   ReqBody = any,
   ReqQuery = ParsedQs,
   Locals extends Record<string, any> = Record<string, any>
 > {
   (
     req: Request<P, ResBody, ReqBody, ReqQuery, Locals>,
-    res: FrapiResponse<R, ResBody, ResBodyValidated, Locals>,
+    res: FrapiResponse<R, ResBody, Locals>,
     next: NextFunction
   ): void;
 }
@@ -85,19 +88,19 @@ export interface ApiMethod<R> {
     Locals extends Record<string, any> = Record<string, any>,
     P = RouteParameters<Path>
   >(
-    options: Path, ...handlers: Array<FrapiRequestHandler<R, P, ResBody, ResBody, ReqBody, ReqQuery, Locals>>): R;
+    options: Path, ...handlers: Array<FrapiRequestHandler<R, P, ResBody, ReqBody, ReqQuery, Locals>>): R;
 
   <
     Path extends string,
     ReqBody = never,
     ReqQuery = never,
-    ResBodyValidated = any,
+    ResBody = any,
     Locals extends Record<string, any> = Record<string, any>,
     P = RouteParameters<Path>
   >(
-    options: { path: Path; name?: string; body?: ReqBody; query?: ReqQuery; response?: ResBodyValidated },
+    options: { path: Path; name?: string; body?: ReqBody; query?: ReqQuery; response?: ResBody },
     ...handlers: Array<
-      FrapiRequestHandler<R, P, never, ToType<ResBodyValidated>, ToType<ReqBody>, ToType<ReqQuery>, Locals>
+      FrapiRequestHandler<R, P, ToType<ResBody>, ToType<ReqBody>, ToType<ReqQuery>, Locals>
     >
   ): R;
 }

@@ -51,11 +51,13 @@ export interface FrapiRouter extends RequestHandler {
 }
 
 interface FrapiResponseVerified<ResBody = any, Locals extends Record<string, any> = Record<string, any>, StatusCode extends number = number> extends Response<ResBody, Locals, StatusCode> {
-  /**
-   * @deprecated You've provided response shape.
-   * To ensure the response shape is verified
-   */
+  /** @deprecated You've provided response shape. To ensure the response shape is verified use sendResponse */
   json: (body?: ResBody) => this;
+  /** @deprecated You've provided response shape. To ensure the response shape is verified use sendResponse */
+  send: (body?: ResBody) => this;
+  /** @deprecated You've provided response shape. To ensure the response shape is verified use sendResponse */
+  jsonp: (body?: ResBody) => this;
+
   sendResponse: (payload: ResBody) => this;
 }
 

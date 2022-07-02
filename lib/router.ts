@@ -110,17 +110,21 @@ export interface ApiMethod<R> {
   ): R;
 }
 
+type Options = RouterOptions & {
+  catchValidationErrors?: (e: any) => void
+}
+
 export interface FrapiRouterConstructor {
-  new (options?: RouterOptions): FrapiRouter;
-  (options?: RouterOptions): FrapiRouter;
+  new (options?: Options): FrapiRouter;
+  (options?: Options): FrapiRouter;
 }
 
 /**
- * @param options: {{ RouterOptions }}
+ * @param routerOptions: {{ RouterOptions }}
  * @return {{ FrapiRouter }}
  */
-function Router(options?: RouterOptions): FrapiRouter {
-  const router = createRouter(options);
+function Router(routerOptions?: Options): FrapiRouter {
+  const router = createRouter(routerOptions);
 
   const methods = [
     "all",
@@ -168,7 +172,7 @@ function Router(options?: RouterOptions): FrapiRouter {
       return originalMethod.call(
         router,
         options.path,
-        middleware({ ...options, [addSendResponseSymbol]: true }),
+        middleware({ catchValidationErrors: routerOptions?.catchValidationErrors , ...options, [addSendResponseSymbol]: true }),
         ...handlers
       );
     };

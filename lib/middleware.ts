@@ -4,7 +4,9 @@ import { ToType, validate } from "./types";
 import * as core from "express-serve-static-core";
 
 export default function frapiMiddleware<Body = undefined, Query = undefined, Response = undefined>(
-  options: string | { name?: string; body?: Body; query?: Query; response?: Response }
+  options:
+    | string
+    | { name?: string; body?: Body; query?: Query; response?: Response; catchValidationErrors?: (error: any) => void }
 ) {
   const obj = {
     // Name of this function has to be equal const middlewareName
@@ -23,7 +25,7 @@ export default function frapiMiddleware<Body = undefined, Query = undefined, Res
 
       if (typeof options === "object" && options.body && typeof options.body !== "boolean") {
         try {
-          validate(options.body, req.body);
+          validateWithCatch(options.body, req.body, options.catchValidationErrors);
         } catch (error) {
           res.status(400);
           res.send("Error while validating request payload. " + error.message);
@@ -33,7 +35,7 @@ export default function frapiMiddleware<Body = undefined, Query = undefined, Res
 
       if (typeof options === "object" && options.query && typeof options.query !== "boolean") {
         try {
-          validate(options.query, req.body);
+          validateWithCatch(options.query, req.body, options.catchValidationErrors);
         } catch (error) {
           res.status(400);
           res.send("Error while validating request query. " + error.message);
@@ -47,7 +49,7 @@ export default function frapiMiddleware<Body = undefined, Query = undefined, Res
         res.sendResponse = (payload: any) => {
           if (options.response && typeof options.response !== "boolean") {
             try {
-              validate(options.response, payload);
+              validateWithCatch(options.response, payload, options.catchValidationErrors);
             } catch (error) {
               error.message = "Error while validating response payload. " + error.message;
               throw error;
@@ -59,8 +61,20 @@ export default function frapiMiddleware<Body = undefined, Query = undefined, Res
       }
 
       return next();
-    }
+    },
   };
 
   return obj.frapiMiddleware;
+}
+
+function validateWithCatch<T>(type: T, object: any, catchErrors?: (error: any) => void) {
+  try {
+    validate<T>(type, object);
+  } catch (error: any) {
+    if (catchErrors) {
+      catchErrors(error);
+    } else {
+      throw error;
+    }
+  }
 }
